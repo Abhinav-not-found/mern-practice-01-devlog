@@ -14,6 +14,10 @@
     {
       "name": "Authentication",
       "description": "Authentication related APIs"
+    },
+    {
+      "name": "Entries",
+      "description": "DevLog entry management APIs"
     }
   ],
   "components": {
@@ -217,10 +221,436 @@
             }
           }
         }
+      },
+      "Entry": {
+        "type": "object",
+        "required": [
+          "_id",
+          "title",
+          "description",
+          "tags",
+          "timeSpent",
+          "status",
+          "createdAt",
+          "updatedAt"
+        ],
+        "properties": {
+          "_id": {
+            "type": "string",
+            "example": "6abd52cbdb8e6ca9c8f4ce99"
+          },
+          "title": {
+            "type": "string",
+            "example": "Learning MongoDB"
+          },
+          "description": {
+            "type": "string",
+            "example": "Learned about MongoDB query filters and indexes."
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              "mongodb",
+              "backend"
+            ]
+          },
+          "timeSpent": {
+            "type": "integer",
+            "minimum": 0,
+            "example": 120
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "in-progress",
+              "completed",
+              "blocked"
+            ],
+            "example": "in-progress"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-09-30T18:19:55.778Z"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-09-30T18:19:55.778Z"
+          }
+        }
+      },
+      "CreateEntryRequest": {
+        "type": "object",
+        "required": [
+          "title",
+          "description"
+        ],
+        "properties": {
+          "title": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 50,
+            "example": "Learning MongoDB"
+          },
+          "description": {
+            "type": "string",
+            "example": "Learned about MongoDB query filters."
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "default": [],
+            "example": [
+              "mongodb",
+              "backend"
+            ]
+          },
+          "timeSpent": {
+            "type": "integer",
+            "minimum": 0,
+            "default": 0,
+            "example": 120
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "in-progress",
+              "completed",
+              "blocked"
+            ],
+            "default": "in-progress",
+            "example": "in-progress"
+          }
+        }
+      },
+      "EditEntryRequest": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 50,
+            "example": "Learning MongoDB"
+          },
+          "description": {
+            "type": "string",
+            "example": "Updated description."
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              "mongodb",
+              "backend"
+            ]
+          },
+          "timeSpent": {
+            "type": "integer",
+            "minimum": 0,
+            "example": 150
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "in-progress",
+              "completed",
+              "blocked"
+            ],
+            "example": "completed"
+          }
+        }
+      },
+      "EntryResponse": {
+        "type": "object",
+        "required": [
+          "statusCode",
+          "message",
+          "data",
+          "success"
+        ],
+        "properties": {
+          "statusCode": {
+            "type": "integer",
+            "example": 200
+          },
+          "message": {
+            "type": "string",
+            "example": "Entry fetched successfully"
+          },
+          "data": {
+            "$ref": "#/components/schemas/Entry"
+          },
+          "success": {
+            "type": "boolean",
+            "example": true
+          }
+        }
+      },
+      "EntriesResponse": {
+        "type": "object",
+        "required": [
+          "statusCode",
+          "message",
+          "data",
+          "success"
+        ],
+        "properties": {
+          "statusCode": {
+            "type": "integer",
+            "example": 200
+          },
+          "message": {
+            "type": "string",
+            "example": "Fetched all entries"
+          },
+          "data": {
+            "type": "object",
+            "required": [
+              "count",
+              "entries"
+            ],
+            "properties": {
+              "count": {
+                "type": "integer",
+                "example": 3
+              },
+              "entries": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/Entry"
+                }
+              }
+            }
+          },
+          "success": {
+            "type": "boolean",
+            "example": true
+          }
+        }
       }
     }
   },
   "paths": {
+    "/entries/create": {
+      "post": {
+        "tags": [
+          "Entries"
+        ],
+        "summary": "Create a new entry",
+        "description": "Creates a new entry.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateEntryRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Entry created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EntryResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid entry data"
+          }
+        }
+      }
+    },
+    "/entries": {
+      "get": {
+        "tags": [
+          "Entries"
+        ],
+        "summary": "Get all entries",
+        "description": "Fetches all entries with optional search, status, and tag filters.",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "search",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Search entries by title or description."
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "in-progress",
+                "completed",
+                "blocked"
+              ]
+            },
+            "description": "Filter entries by status."
+          },
+          {
+            "in": "query",
+            "name": "tags",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Filter entries containing the specified tag."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Entries fetched successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EntriesResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid query parameters"
+          }
+        }
+      }
+    },
+    "/entries/{id}": {
+      "get": {
+        "tags": [
+          "Entries"
+        ],
+        "summary": "Get a single entry",
+        "description": "Fetches an entry using its ID.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The ID of the entry."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Entry fetched successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EntryResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid entry ID"
+          },
+          "404": {
+            "description": "Entry not found"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Entries"
+        ],
+        "summary": "Update an entry",
+        "description": "Updates one or more fields of an existing entry.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The ID of the entry."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EditEntryRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Entry updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EntryResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid entry ID or entry data"
+          },
+          "404": {
+            "description": "Entry not found"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Entries"
+        ],
+        "summary": "Delete an entry",
+        "description": "Deletes an existing entry using its ID.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The ID of the entry."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Entry deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EntryResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid entry ID"
+          },
+          "404": {
+            "description": "Entry not found"
+          }
+        }
+      }
+    },
     "/auth/register": {
       "post": {
         "tags": [
