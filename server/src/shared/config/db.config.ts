@@ -7,7 +7,7 @@ async function connectDb() {
     const conn = await mongoose.connect(env.MONGODB);
     console.log(colorText(`Database connected`, 'black', 'green'));
   } catch (error) {
-    console.log('Error in database connection:', error);
+    console.log(colorText('Error in database connection:', 'red'), error);
   }
 }
 
